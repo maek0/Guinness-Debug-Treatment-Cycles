@@ -1,6 +1,6 @@
 import serial
 import time
-import csv
+import numpy as np
 
 COM = input("Enter the COM number (e.g., '5', not 'COM5') of the Guinness USB Debug Cable (AT-0001-656) in use: ")
 
@@ -9,7 +9,7 @@ COMX = str('COM'+COM)
 filename = str(input("Enter the file name (e.g., 'fileName', not 'fileName.csv') that the serial data will be writtent to: ")+'.csv')
 # print(filename)
 
-buffer = input("Enter the number of minutes to wait between applied treatment cycles: ")
+buffer = float(input("Enter the (nonzero) number of minutes (e.g., 62 or 0.5) to wait between applied treatment cycles: "))
 
 ser = serial.Serial(
     port=COMX,
@@ -24,14 +24,18 @@ timerstart = time.time()
 
 output = ""
 
-print("Opening serial connection to "+COMX+".")
+print("Opening serial connection to "+COMX+" and logging to "+filename+".")
 ser.write("test\r".encode())
 
 i = 0
+hold = int(np.ceil(buffer*60))
+cycleLength = 242   # 4 minutes +2 second for treatment cycle
 
 stat = ser.is_open
 
 while stat == True:
+    stat = ser.is_open
+
     # log serial output:
     output = ser.readline()
     f = open(filename,"ab")
@@ -39,9 +43,8 @@ while stat == True:
     f.close()
     tic = time.time()
     toc = tic-timerstart
-    # print(toc)
 
-    if toc>=5:
+    if toc>=hold:
         print('Treatment cycle #'+str(i+1)+' starting...')
         time.sleep(0.5)
         ser.write("reset\r".encode())
@@ -52,7 +55,9 @@ while stat == True:
         time.sleep(0.5)
         ser.write("start\r".encode())
 
-        while toc>=245 and toc<=492:
+        while toc>=hold and toc<=int(hold+cycleLength):
+            stat = ser.is_open
+            
             output = ser.readline()
             f = open(filename,"ab")
             f.write(output)
