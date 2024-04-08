@@ -1,0 +1,12 @@
+Opening serial connection with the following parameters:
+   COM Port: COM22
+   Logging to File: test3.csv
+   0.05 minutes between treatment cycles
+   Voltage Setpoint: 75V
+
+Press CTRL+C in the terminal to stop the script at any time.
+
+Treatment cycle #1 starting...
+Treatment cycle #2 starting...
+The function ran for 0.070 hours.
+1 complete treatment cycles were run.
