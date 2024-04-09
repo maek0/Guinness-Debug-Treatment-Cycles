@@ -36,6 +36,7 @@ def printLog(*args, **kwargs):
         print(*args, **kwargs, file=file)
 
 errormsg = "\nCan't write to the serial port, check the system's connections and the input parameters. Error type: "
+errormsgEnd = "\nLost connection with the machine. Error type: "
 
 try:
     ser = serial.Serial(
@@ -47,22 +48,22 @@ try:
     )
 except FileNotFoundError as e:
     printLog(errormsg,type(e))
-    sys.exit()
+    exit()
 except serial.SerialException as e:
     printLog(errormsg,type(e))
-    sys.exit()
+    exit()
 except ValueError as e:
     printLog(errormsg,type(e))
-    sys.exit()
+    exit()
 except TimeoutError as e:
     printLog(errormsg,type(e))
-    sys.exit()
+    exit()
 except TypeError as e:
     printLog(errormsg,type(e))
-    sys.exit()
+    exit()
 except IndexError as e:
     printLog(errormsg,type(e))
-    sys.exit()
+    exit()
     
 functionstart = time.time()
 printLog("\nScript started at ", time.strftime("%b %d %Y %H:%M:%S"))
@@ -87,7 +88,7 @@ timerstart = time.time()
 
 try:
     while i < 18001:
-        while stat == True:
+        if stat == True:
             stat = ser.is_open
             output = ser.readline()
             f = open(filename,"ab")
@@ -120,19 +121,43 @@ try:
                 timerstart = time.time()
                 tic = time.time()
                 toc = tic-timerstart
+        else:
+            noconnection = time.time()
+            printLog("\nLost connection with the machine at", time.strftime("%b %d %Y %H:%M:%S"))
+            
+            functionstop = time.time()
+            delta = ((functionstop-functionstart)/60)/60  # hours
+            printLog("\nThe function ran for {:0.3f} hours.".format(delta))
+            printLog(str(i)+' complete treatment cycle(s) ran during this time.')
+            print("\nSee ",debug_filename,"for record of output printed to terminal.")
+            time.sleep(10)
+            print("\nWindow closing in...")
+            print("5...")
+            time.sleep(1)
+            print("4...")
+            time.sleep(1)
+            print("3...")
+            time.sleep(1)
+            print("2...")
+            time.sleep(1)
+            print("1...")
+            time.sleep(1)
+            exit()
 
 except KeyboardInterrupt:
     manualstop = time.time()
     printLog("\nScript stopped manually at ", time.strftime("%b %d %Y %H:%M:%S"))
     pass
 except ValueError as e:
-    printLog("\nSomething went wrong, check the system's connections and setup. Error type: ",type(e))
+    printLog(errormsgEnd,type(e))
 except TimeoutError as e:
-    printLog("\nSomething went wrong, check the system's connections and setup. Error type: ",type(e))
+    printLog(errormsgEnd,type(e))
 except TypeError as e:
-    printLog("\nSomething went wrong, check the system's connections and setup. Error type: ",type(e))
+    printLog(errormsgEnd,type(e))
 except IndexError as e:
-    printLog("\nSomething went wrong, check the system's connections and setup. Error type: ",type(e))
+    printLog(errormsgEnd,type(e))
+except serial.SerialException as e:
+    printLog(errormsgEnd,type(e))
     
 functionstop = time.time()
 delta = ((functionstop-functionstart)/60)/60  # hours
