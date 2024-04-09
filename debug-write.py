@@ -9,12 +9,14 @@ try:
     import serial
 except ImportError:
     print("The required Python module 'serial' is not installed, installing now...")
-    install('serial')
+    time.sleep(0.5)
+    install('pyserial')
 
 try:
     import numpy as np
 except ImportError:
     print("The required Python module 'numpy' is not installed, installing now...")
+    time.sleep(0.5)
     install('numpy')
 
 COM = input("Enter the COM number (e.g., '5', not 'COM5') of the Guinness USB Debug Cable (AT-0001-656) in use: ")
@@ -33,14 +35,35 @@ def printLog(*args, **kwargs):
     with open(debug_filename,'a') as file:
         print(*args, **kwargs, file=file)
 
-ser = serial.Serial(
-    port=COMX,
-    baudrate=115200,
-    bytesize=serial.EIGHTBITS,
-    stopbits=serial.STOPBITS_ONE,
-    parity=serial.PARITY_NONE
-)
+errormsg = "\nCan't write to the serial port, check the system's connections and the input parameters. Error type: "
 
+try:
+    ser = serial.Serial(
+        port=COMX,
+        baudrate=115200,
+        bytesize=serial.EIGHTBITS,
+        stopbits=serial.STOPBITS_ONE,
+        parity=serial.PARITY_NONE
+    )
+except FileNotFoundError as e:
+    printLog(errormsg,type(e))
+    sys.exit()
+except serial.SerialException as e:
+    printLog(errormsg,type(e))
+    sys.exit()
+except ValueError as e:
+    printLog(errormsg,type(e))
+    sys.exit()
+except TimeoutError as e:
+    printLog(errormsg,type(e))
+    sys.exit()
+except TypeError as e:
+    printLog(errormsg,type(e))
+    sys.exit()
+except IndexError as e:
+    printLog(errormsg,type(e))
+    sys.exit()
+    
 functionstart = time.time()
 printLog("\nScript started at ", time.strftime("%b %d %Y %H:%M:%S"))
 
@@ -52,31 +75,20 @@ time.sleep(0.5)
 printLog("\nPress CTRL+C in the terminal to stop the script at any time.\n")
 time.sleep(0.5)
 
-try:
-    ser.write("test\r".encode())
-except ValueError as e:
-    printLog("Can't write to the serial port, check the system's connections. Error type: ",type(e))
-except TimeoutError as e:
-    printLog("Can't write to the serial port, check the system's connections. Error type: ",type(e))
-except TypeError as e:
-    printLog("Can't write to the serial port, check the system's connections. Error type: ",type(e))
-except IndexError as e:
-    printLog("Can't write to the serial port, check the system's connections. Error type: ",type(e))
+stat = ser.is_open
+ser.write("test\r".encode())
     
 i = 0
 hold = int(np.ceil(buffer*60))
 cycleLength = 242   # 4 minutes +2 second for treatment cycle
 # note: extra 2 seconds compensates for the 2s of sleep totalled between commands
 
-stat = ser.is_open
 timerstart = time.time()
 
 try:
     while i < 18001:
         while stat == True:
             stat = ser.is_open
-
-            # log serial output:
             output = ser.readline()
             f = open(filename,"ab")
             f.write(output)
@@ -97,7 +109,6 @@ try:
 
                 while toc>=hold and toc<=int(hold+cycleLength):
                     stat = ser.is_open
-
                     output = ser.readline()
                     f = open(filename,"ab")
                     f.write(output)
@@ -115,20 +126,20 @@ except KeyboardInterrupt:
     printLog("\nScript stopped manually at ", time.strftime("%b %d %Y %H:%M:%S"))
     pass
 except ValueError as e:
-    printLog("Something went wrong, check the system's connections and setup. Error type: ",type(e))
+    printLog("\nSomething went wrong, check the system's connections and setup. Error type: ",type(e))
 except TimeoutError as e:
-    printLog("Something went wrong, check the system's connections and setup. Error type: ",type(e))
+    printLog("\nSomething went wrong, check the system's connections and setup. Error type: ",type(e))
 except TypeError as e:
-    printLog("Something went wrong, check the system's connections and setup. Error type: ",type(e))
+    printLog("\nSomething went wrong, check the system's connections and setup. Error type: ",type(e))
 except IndexError as e:
-    printLog("Something went wrong, check the system's connections and setup. Error type: ",type(e))
+    printLog("\nSomething went wrong, check the system's connections and setup. Error type: ",type(e))
     
 functionstop = time.time()
 delta = ((functionstop-functionstart)/60)/60  # hours
-printLog("The function ran for {:0.3f} hours.".format(delta))
+printLog("\nThe function ran for {:0.3f} hours.".format(delta))
 printLog(str(i)+' complete treatment cycle(s) ran during this time.')
 print("\nSee ",debug_filename,"for record of output printed to terminal.")
-time.sleep(5)
+time.sleep(10)
 print("\nWindow closing in...")
 print("5...")
 time.sleep(1)
