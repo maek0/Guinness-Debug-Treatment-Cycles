@@ -8,11 +8,13 @@ def install(package):
 try:
     import serial
 except ImportError:
+    print("The required Python module 'serial' is not installed, installing now...")
     install('serial')
 
 try:
     import numpy as np
 except ImportError:
+    print("The required Python module 'numpy' is not installed, installing now...")
     install('numpy')
 
 COM = input("Enter the COM number (e.g., '5', not 'COM5') of the Guinness USB Debug Cable (AT-0001-656) in use: ")
