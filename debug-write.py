@@ -78,6 +78,7 @@ time.sleep(0.5)
 
 stat = ser.is_open
 ser.write("test\r".encode())
+ser.timeout = 1
     
 i = 0
 hold = int(np.ceil(buffer*60))
@@ -98,7 +99,8 @@ try:
             toc = tic-timerstart
 
             if toc>=hold:
-                printLog('Treatment cycle #'+str(i+1)+' starting...')
+                treatTime = time.time()
+                printLog('Treatment cycle #'+str(i+1)+' starting at', time.strftime("%b %d %Y %H:%M:%S"),' ...')
                 time.sleep(0.5)
                 ser.write("reset\r".encode())
                 time.sleep(0.5)
@@ -110,6 +112,28 @@ try:
 
                 while toc>=hold and toc<=int(hold+cycleLength):
                     stat = ser.is_open
+                    if stat == False:
+                        noconnection = time.time()
+                        printLog("\nLost connection with the machine at", time.strftime("%b %d %Y %H:%M:%S"))
+                        
+                        functionstop = time.time()
+                        delta = ((functionstop-functionstart)/60)/60  # hours
+                        printLog("\nThe function ran for {:0.3f} hours.".format(delta))
+                        printLog(str(i)+' complete treatment cycle(s) ran during this time.')
+                        print("\nSee ",debug_filename,"for record of output printed to terminal.")
+                        time.sleep(10)
+                        print("\nWindow closing in...")
+                        print("5...")
+                        time.sleep(1)
+                        print("4...")
+                        time.sleep(1)
+                        print("3...")
+                        time.sleep(1)
+                        print("2...")
+                        time.sleep(1)
+                        print("1...")
+                        time.sleep(1)
+                        exit()
                     output = ser.readline()
                     f = open(filename,"ab")
                     f.write(output)
@@ -158,6 +182,8 @@ except IndexError as e:
     printLog(errormsgEnd,type(e))
 except serial.SerialException as e:
     printLog(errormsgEnd,type(e))
+except PermissionError as e:
+    printLog("\n",filename,"could not be accessed. Error type: ",type(e))
     
 functionstop = time.time()
 delta = ((functionstop-functionstart)/60)/60  # hours
