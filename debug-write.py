@@ -1,7 +1,19 @@
-import serial
-import time
-import numpy as np
 import sys
+import subprocess
+import time
+
+def install(package):
+    subprocess.check_call([sys.executable,"-m","pip","install",package])
+
+try:
+    import serial
+except ImportError:
+    install('serial')
+
+try:
+    import numpy as np
+except ImportError:
+    install('numpy')
 
 COM = input("Enter the COM number (e.g., '5', not 'COM5') of the Guinness USB Debug Cable (AT-0001-656) in use: ")
 
