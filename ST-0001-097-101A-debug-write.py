@@ -4,19 +4,40 @@ import time
 
 def install(package):
     subprocess.check_call([sys.executable,"-m","pip","install",package])
+    
+def reinstall(package):
+    subprocess.check_call([sys.executable,"-m","pip","install","--upgrade","--force-reinstall",package])
 
+def uninstall(package):
+    subprocess.check_call([sys.executable,"-m","pip","uninstall",package])
+
+def printLog(*args, **kwargs):
+    print(*args, **kwargs)
+    with open(debug_filename,'a') as file:
+        print(*args, **kwargs, file=file)
+        
 try:
+    proceed = input("\nAttempting to uninstall the 'serial' module if installed. The script will not work with this module installed - proceed? (Y/n):  ")
+    if proceed == "y" or "Y":
+        uninstall('serial')
+    else:
+        print("\nThe script will not work without verifying if 'serial' is not installed. Exiting script...")
+        time.sleep(3)
+        exit()
+    print("(Re)installing Python module 'pyserial' to ensure compatibility with script...")
+    time.sleep(1)
+    reinstall('pyserial')
     import serial
 except ImportError:
-    print("The required Python module 'serial' is not installed, installing now...")
-    time.sleep(0.5)
+    print("The required Python module 'pyserial' is not installed, installing now...")
+    time.sleep(1)
     install('pyserial')
 
 try:
     import numpy as np
 except ImportError:
     print("The required Python module 'numpy' is not installed, installing now...")
-    time.sleep(0.5)
+    time.sleep(1)
     install('numpy')
 
 COM = input("Enter the COM number (e.g., '5', not 'COM5') of the Guinness USB Debug Cable (AT-0001-656) in use: ")
@@ -29,11 +50,6 @@ debug_filename = str(name+"_terminalPrint.txt")
 buffer = float(input("Enter the (nonzero) number of minutes (e.g., 62 or 0.5) to wait between applied treatment cycles: "))
 volt = str(input("Enter the voltage setpoint (integer in the range [0, 150]) for the treatment cycles to run at: "))
 tv = str("t_v "+volt+"\r")
-
-def printLog(*args, **kwargs):
-    print(*args, **kwargs)
-    with open(debug_filename,'a') as file:
-        print(*args, **kwargs, file=file)
 
 errormsg = "\nCan't write to the serial port, check the system's connections and the input parameters. Error type: "
 errormsgEnd = "\nLost connection with the machine. Error type: "
@@ -48,21 +64,33 @@ try:
     )
 except FileNotFoundError as e:
     printLog(errormsg,type(e))
+    print("Exiting...")
+    time.sleep(5)
     exit()
 except serial.SerialException as e:
     printLog(errormsg,type(e))
+    print("Exiting...")
+    time.sleep(5)
     exit()
 except ValueError as e:
     printLog(errormsg,type(e))
+    print("Exiting...")
+    time.sleep(5)
     exit()
 except TimeoutError as e:
     printLog(errormsg,type(e))
+    print("Exiting...")
+    time.sleep(5)
     exit()
 except TypeError as e:
     printLog(errormsg,type(e))
+    print("Exiting...")
+    time.sleep(5)
     exit()
 except IndexError as e:
     printLog(errormsg,type(e))
+    print("Exiting...")
+    time.sleep(5)
     exit()
     
 functionstart = time.time()
@@ -83,7 +111,7 @@ ser.timeout = 1
 i = 0
 hold = int(np.ceil(buffer*60))
 cycleLength = 242   # 4 minutes +2 second for treatment cycle
-# note: extra 2 seconds compensates for the 2s of sleep totalled between commands
+# note: extra 2 seconds compensates for the 2s of sleep totalled between generator commands
 
 timerstart = time.time()
 
