@@ -1,0 +1,95 @@
+
+Script started at  Apr 17 2024 11:38:33
+
+Opening serial connection with the following parameters:
+   COM Port: COM22
+   Logging to File: GUIN-500.csv
+   0.5 minutes between treatment cycles
+   Voltage Setpoint: 150V
+
+Press CTRL+C in the terminal to stop the script at any time.
+
+Treatment cycle #1 starting at Apr 17 2024 11:39:04  ...
+Treatment cycle #2 starting at Apr 17 2024 11:43:37  ...
+Treatment cycle #3 starting at Apr 17 2024 11:48:09  ...
+
+Script stopped manually at  Apr 17 2024 11:52:29
+
+The function ran for 0.232 hours.
+3 complete treatment cycle(s) ran during this time.
+
+Script started at  Apr 17 2024 11:55:47
+
+Opening serial connection with the following parameters:
+   COM Port: COM22
+   Logging to File: GUIN-500.csv
+   0.5 minutes between treatment cycles
+   Voltage Setpoint: 150V
+
+Press CTRL+C in the terminal to stop the script at any time.
+
+Treatment cycle #1 starting at Apr 17 2024 11:56:18  ...
+Treatment cycle #2 starting at Apr 17 2024 12:00:51  ...
+Treatment cycle #3 starting at Apr 17 2024 12:05:23  ...
+Treatment cycle #4 starting at Apr 17 2024 12:09:55  ...
+Treatment cycle #5 starting at Apr 17 2024 12:14:27  ...
+Treatment cycle #6 starting at Apr 17 2024 12:18:59  ...
+
+Script stopped manually at  Apr 17 2024 12:23:14
+
+The function ran for 0.457 hours.
+6 complete treatment cycle(s) ran during this time.
+
+Script started at  Apr 17 2024 12:23:55
+
+Opening serial connection with the following parameters:
+   COM Port: COM22
+   Logging to File: GUIN-500.csv
+   0.5 minutes between treatment cycles
+   Voltage Setpoint: 150V
+
+Press CTRL+C in the terminal to stop the script at any time.
+
+Treatment cycle #1 starting at Apr 17 2024 12:24:26  ...
+Treatment cycle #2 starting at Apr 17 2024 12:28:58  ...
+Treatment cycle #3 starting at Apr 17 2024 12:33:30  ...
+
+Script stopped manually at  Apr 17 2024 12:36:21
+
+The function ran for 0.207 hours.
+2 complete treatment cycle(s) ran during this time.
+
+Script started at  Apr 17 2024 12:37:59
+
+Opening serial connection with the following parameters:
+   COM Port: COM22
+   Logging to File: GUIN-500.csv
+   0.5 minutes between treatment cycles
+   Voltage Setpoint: 150V
+
+Press CTRL+C in the terminal to stop the script at any time.
+
+Treatment cycle #1 starting at Apr 17 2024 12:38:30  ...
+Treatment cycle #2 starting at Apr 17 2024 12:43:02  ...
+Treatment cycle #3 starting at Apr 17 2024 12:47:34  ...
+
+Script stopped manually at  Apr 17 2024 12:48:28
+
+The function ran for 0.175 hours.
+2 complete treatment cycle(s) ran during this time.
+
+Script started at  Apr 17 2024 15:14:29
+
+Opening serial connection with the following parameters:
+   COM Port: COM22
+   Logging to File: GUIN-500.csv
+   0.5 minutes between treatment cycles
+   Voltage Setpoint: 100V
+
+Press CTRL+C in the terminal to stop the script at any time.
+
+Treatment cycle #1 starting at Apr 17 2024 15:15:24  ...
+The generator stopped sending data at  Apr 17 2024 15:15:41
+
+The script ran for 0.020 hours.
+0 complete treatment cycle(s) ran during this time.
