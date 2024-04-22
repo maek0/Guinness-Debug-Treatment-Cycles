@@ -16,23 +16,23 @@ def printLog(*args, **kwargs):
     with open(debug_filename,'a') as file:
         print(*args, **kwargs, file=file)
         
-# try:
-#     proceed = input("\nAttempting to uninstall the 'serial' module if installed. The script will not work with this module installed - proceed? (Y/n):  ")
-#     if proceed == "y" or proceed == "Y":
-#         uninstall('serial')
-#     else:
-#         print("\nThe script will not work without verifying if 'serial' is not installed. Exiting script...\n")
-#         time.sleep(3)
-#         exit()
-#     print("\n(Re)installing Python module 'pyserial' to ensure compatibility with script...\n")
-#     time.sleep(1)
-#     reinstall('pyserial')
-#     import serial
-# except ImportError:
-#     print("\nThe required Python module 'pyserial' is not installed, installing now...\n")
-#     time.sleep(1)
-#     install('pyserial')
-#     import serial
+try:
+    proceed = input("\nAttempting to uninstall the 'serial' module if installed. The script will not work with this module installed - proceed? (Y/n):  ")
+    if proceed == "y" or proceed == "Y":
+        uninstall('serial')
+    else:
+        print("\nThe script will not work without verifying if 'serial' is not installed. Exiting script...\n")
+        time.sleep(3)
+        exit()
+    print("\n(Re)installing Python module 'pyserial' to ensure compatibility with script...\n")
+    time.sleep(1)
+    reinstall('pyserial')
+    import serial
+except ImportError:
+    print("\nThe required Python module 'pyserial' is not installed, installing now...\n")
+    time.sleep(1)
+    install('pyserial')
+    import serial
 import serial
 
 try:
