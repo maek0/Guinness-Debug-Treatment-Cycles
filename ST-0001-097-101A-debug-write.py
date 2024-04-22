@@ -18,18 +18,18 @@ def printLog(*args, **kwargs):
         
 # try:
 #     proceed = input("\nAttempting to uninstall the 'serial' module if installed. The script will not work with this module installed - proceed? (Y/n):  ")
-#     if proceed == "y" or "Y":
+#     if proceed == "y" or proceed == "Y":
 #         uninstall('serial')
 #     else:
-#         print("\nThe script will not work without verifying if 'serial' is not installed. Exiting script...")
+#         print("\nThe script will not work without verifying if 'serial' is not installed. Exiting script...\n")
 #         time.sleep(3)
 #         exit()
-#     print("(Re)installing Python module 'pyserial' to ensure compatibility with script...")
+#     print("\n(Re)installing Python module 'pyserial' to ensure compatibility with script...\n")
 #     time.sleep(1)
 #     reinstall('pyserial')
 #     import serial
 # except ImportError:
-#     print("The required Python module 'pyserial' is not installed, installing now...")
+#     print("\nThe required Python module 'pyserial' is not installed, installing now...\n")
 #     time.sleep(1)
 #     install('pyserial')
 #     import serial
@@ -38,14 +38,14 @@ import serial
 try:
     from tqdm import tqdm
 except ImportError:
-    print("The required Python module 'tqdm' is not installed, installing now...")
+    print("\nThe required Python module 'tqdm' is not installed, installing now...\n")
     time.sleep(1)
     install('tqdp')
 
 try:
     import numpy as np
 except ImportError:
-    print("The required Python module 'numpy' is not installed, installing now...")
+    print("\nThe required Python module 'numpy' is not installed, installing now...\n")
     time.sleep(1)
     install('numpy')
 
@@ -77,6 +77,7 @@ def verifyStart(serial, treatTime):
         treatTimeNew = time.time()
         serial.write("start\r".encode())
         treatTime = verifyStart(serial, treatTimeNew)
+        time.sleep(0.2)
     else:
         treatTimeNew = treatTime
     return treatTimeNew
@@ -96,9 +97,15 @@ def windowClose():
     time.sleep(1)
     exit()
     
-def functionStop(functionstartTime):
+def functionStop(functionstartTime, count):
     functionstop = time.time()
     delta = ((functionstop-functionstartTime)/60)/60  # hours
+    
+    if count >= 0:
+        i = count
+    else:
+        i = 0
+        
     printLog("\nThe script ran for {:0.3f} hours.".format(delta))
     printLog(str(i)+' complete treatment cycle(s) ran during this time.')
     print("\nSee ",debug_filename,"for record of output printed to terminal.")
@@ -106,11 +113,11 @@ def functionStop(functionstartTime):
     
 def errorHandle(message,name):
     printLog(message,name)
-    print("Exiting...")
+    print("\nExiting...")
     time.sleep(5)
     exit()
     
-def readWrite(filename,serial,functionstartTime):
+def readWrite(filename,serial,functionstartTime,i):
     output = serial.readline()
     f = open(filename,"ab")
     f.write(output)
@@ -118,27 +125,47 @@ def readWrite(filename,serial,functionstartTime):
     
     if not output:
         stoptime = time.time()
-        printLog("The generator stopped sending data at ", time.strftime("%b %d %Y %H:%M:%S"))
-        functionStop(functionstartTime)
+        printLog("\nError: The generator stopped sending data at ", time.strftime("%b %d %Y %H:%M:%S"))
+        functionStop(functionstartTime,i)
 
 def catchStop(serial, toc, i):
-    output = serial.readline().decode().startswith("Treatment Terminated Early")
-    if output:
-        printLog("\nThe treatment cycle was stopped early. Only {:.2f} seconds had elapsed instead of 240.\nThis cycle will not count as a completed treatment cycle.".format(toc))
+    if serial.readline().decode().startswith("Treatment Terminated Early..."):
+        printLog("\nThe treatment cycle was stopped early. Only {:.2f} seconds had elapsed instead of 240.\nThis cycle will not count as a completed treatment cycle.\n".format(toc))
+        newi = i -1
+    elif serial.readline().decode().startswith("FSM Task: recieved button index 11"):
+        printLog("\nThe treatment cycle was stopped early. Only {:.2f} seconds had elapsed instead of 240.\nThis cycle will not count as a completed treatment cycle.\n".format(toc))
         newi = i -1
     else:
         newi = i
+        
+    if newi < 0:
+        newi = 0
+        
     return newi
 
-COM = input("Enter the COM number (e.g., '5', not 'COM5') of the Guinness USB Debug Cable (AT-0001-656) in use: ")
+COM = input("\nEnter the COM number of the Guinness USB Debug Cable (AT-0001-656) in use: ")
+if COM == "COM*":
+    COMX = COM
+else:
+    COMX = str('COM'+COM)
 
-COMX = str('COM'+COM)
-
-name = input("Enter the file name (e.g., 'fileName', not 'fileName.csv') that the serial data will be writtent to: ")
-filename = str(name+'.csv')
+name = input("Enter the file name that the serial data will be writtent to: ")
+if name == "*.csv":
+    filename = name
+else:
+    filename = str(name+'.csv')
+    
 debug_filename = str(name+"_terminalPrint.txt")
 buffer = float(input("Enter the (nonzero) number of minutes (e.g., 62 or 0.5) to wait between applied treatment cycles: "))
+if buffer == 0.0:
+    printLog("\nError: The timer interval between treatment cycles must be above 0 minutes.")
+    windowClose()
+
 volt = str(input("Enter the voltage setpoint (integer in the range [0, 150]) for the treatment cycles to run at: "))
+if volt == "*-*" or float(volt)>150 or volt == "*.*":
+    printLog("\nError: The voltage setpoint must be an integer in the range [0, 150].")
+    windowClose()
+
 tv = str("t_v "+volt+"\r")
 
 errormsg = "\nCan't write to the serial port, check the system's connections and the input parameters. Error type: "
@@ -166,7 +193,8 @@ except IndexError as e:
     errorHandle(errormsg,type(e))
     
 functionstart = time.time()
-printLog("\nScript started at ", time.strftime("%b %d %Y %H:%M:%S"))
+print("\n")
+printLog("----- Script started at ", time.strftime("%b %d %Y %H:%M:%S")," -----")
 
 output = ""
 
@@ -192,7 +220,7 @@ if not heard:
     
     print("\nSee ",debug_filename,"for record of output printed to terminal.")
     windowClose()
-
+print("\n")
 i = 0
 hold = int(np.ceil(buffer*60))
 cycleLength = 242   # 4 minutes +2 second for treatment cycle
@@ -204,7 +232,7 @@ try:
     while i < 18001:
         if stat == True:
             stat = ser.is_open
-            readWrite(filename,ser,functionstart)
+            readWrite(filename,ser,functionstart,i)
             tic = time.time()
             toc = tic-timerstart
 
@@ -222,6 +250,7 @@ try:
                 
                 catchError(ser, functionstart)
                 catchFault(ser, functionstart)
+                i = catchStop(ser, toc, i)
                 
                 treatTime = verifyStart(ser,treatTime)
             
@@ -231,9 +260,9 @@ try:
                     if stat == False:
                         noconnection = time.time()
                         printLog("\nLost connection with the machine at", time.strftime("%b %d %Y %H:%M:%S"))
-                        functionStop(functionstart)
+                        functionStop(functionstart,i)
                         
-                    readWrite(filename,ser,functionstart)
+                    readWrite(filename,ser,functionstart,i)
                     
                     catchError(ser, functionstart)
                     catchFault(ser, functionstart)
@@ -249,7 +278,7 @@ try:
         else:
             noconnection = time.time()
             printLog("\nLost connection with the machine at", time.strftime("%b %d %Y %H:%M:%S"))
-            functionStop(functionstart)
+            functionStop(functionstart,i)
 
 except KeyboardInterrupt:
     manualstop = time.time()
@@ -257,15 +286,20 @@ except KeyboardInterrupt:
     pass
 except ValueError as e:
     printLog(errormsgEnd,type(e))
+    ser.write("stop\r".encode())
 except TimeoutError as e:
     printLog(errormsgEnd,type(e))
+    ser.write("stop\r".encode())
 except TypeError as e:
     printLog(errormsgEnd,type(e))
+    ser.write("stop\r".encode())
 except IndexError as e:
     printLog(errormsgEnd,type(e))
+    ser.write("stop\r".encode())
 except serial.SerialException as e:
     printLog(errormsgEnd,type(e))
 except PermissionError as e:
     printLog("\n",filename,"could not be accessed. Error type: ",type(e))
+    ser.write("stop\r".encode())
     
-functionStop(functionstart)
+functionStop(functionstart,i)
