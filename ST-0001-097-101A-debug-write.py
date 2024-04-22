@@ -40,7 +40,7 @@ try:
 except ImportError:
     print("\nThe required Python module 'tqdm' is not installed, installing now...\n")
     time.sleep(1)
-    install('tqdp')
+    install('tqdm')
 
 try:
     import numpy as np
