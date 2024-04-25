@@ -57,6 +57,7 @@ def catchError(serial, functionstartTime):
         functionstop = time.time()
         delta = ((functionstop-functionstartTime)/60)/60  # hours
         printLog("\nThe function ran for {:0.3f} hours.".format(delta))
+        f.close()
         time.sleep(5)
         exit()
         
@@ -68,6 +69,7 @@ def catchFault(serial, functionstartTime):
         functionstop = time.time()
         delta = ((functionstop-functionstartTime)/60)/60  # hours
         printLog("\nThe function ran for {:0.3f} hours.".format(delta))
+        f.close()
         time.sleep(5)
         exit()
 
@@ -100,7 +102,7 @@ def windowClose():
 def functionStop(functionstartTime, count):
     functionstop = time.time()
     delta = ((functionstop-functionstartTime)/60)/60  # hours
-    
+    f.close()
     if count >= 0:
         i = count
     else:
@@ -113,15 +115,14 @@ def functionStop(functionstartTime, count):
     
 def errorHandle(message,name):
     printLog(message,name)
+    f.close()
     print("\nExiting...")
     time.sleep(5)
     exit()
     
-def readWrite(filename,serial,functionstartTime,i):
+def readWrite(serial,functionstartTime,i):
     output = serial.readline()
-    f = open(filename,"ab")
     f.write(output)
-    f.close()
     
     if not output:
         stoptime = time.time()
@@ -170,6 +171,9 @@ tv = str("t_v "+volt+"\r")
 
 errormsg = "\nCan't write to the serial port, check the system's connections and the input parameters. Error type: "
 errormsgEnd = "\nLost connection with the machine. Error type: "
+
+f = open(filename,"ab")
+
 
 try:
     ser = serial.Serial(
@@ -232,7 +236,7 @@ try:
     while i < 18001:
         if stat == True:
             stat = ser.is_open
-            readWrite(filename,ser,functionstart,i)
+            readWrite(ser,functionstart,i)
             tic = time.time()
             toc = tic-timerstart
 
@@ -262,7 +266,7 @@ try:
                         printLog("\nLost connection with the machine at", time.strftime("%b %d %Y %H:%M:%S"))
                         functionStop(functionstart,i)
                         
-                    readWrite(filename,ser,functionstart,i)
+                    readWrite(ser,functionstart,i)
                     
                     catchError(ser, functionstart)
                     catchFault(ser, functionstart)
