@@ -15,25 +15,22 @@ def printLog(*args, **kwargs):
     print(*args, **kwargs)
     with open(debug_filename,'a') as file:
         print(*args, **kwargs, file=file)
-        
+
+proceed = input("\nAttempting to uninstall the 'serial' module if installed. The script will not work with this module installed - proceed? (Y/n):  ")
+if proceed == "y" or proceed == "Y":
+    uninstall('serial')
+else:
+    print("\nThe script will not work without verifying if 'serial' is not installed. Exiting script...\n")
+    time.sleep(3)
+    exit()
+
 try:
-    proceed = input("\nAttempting to uninstall the 'serial' module if installed. The script will not work with this module installed - proceed? (Y/n):  ")
-    if proceed == "y" or proceed == "Y":
-        uninstall('serial')
-    else:
-        print("\nThe script will not work without verifying if 'serial' is not installed. Exiting script...\n")
-        time.sleep(3)
-        exit()
-    print("\n(Re)installing Python module 'pyserial' to ensure compatibility with script...\n")
-    time.sleep(1)
-    reinstall('pyserial')
     import serial
 except ImportError:
     print("\nThe required Python module 'pyserial' is not installed, installing now...\n")
     time.sleep(1)
     install('pyserial')
     import serial
-import serial
 
 try:
     from tqdm import tqdm
@@ -41,6 +38,7 @@ except ImportError:
     print("\nThe required Python module 'tqdm' is not installed, installing now...\n")
     time.sleep(1)
     install('tqdm')
+    from tqdm import tqdm
 
 try:
     import numpy as np
@@ -48,6 +46,7 @@ except ImportError:
     print("\nThe required Python module 'numpy' is not installed, installing now...\n")
     time.sleep(1)
     install('numpy')
+    import numpy as np
 
 errormsg = "\nCan't write to the serial port, check the system's connections and the input parameters. Error type: "
 errormsgEnd = "\nLost connection with the machine. Error type: "
@@ -196,7 +195,19 @@ try:
 except FileNotFoundError as e:
     errorHandle(errormsg,type(e))
 except serial.SerialException as e:
-    errorHandle(errormsg,type(e))
+    print("A SerialException occurred.\nReinstalling Python module 'pyserial' to ensure compatibility with script...\n")
+    time.sleep(1)
+    reinstall('pyserial')
+    try:
+        ser = serial.Serial(
+            port=COMX,
+            baudrate=115200,
+            bytesize=serial.EIGHTBITS,
+            stopbits=serial.STOPBITS_ONE,
+            parity=serial.PARITY_NONE
+        )
+    except serial.SerialException as e:
+        errorHandle(errormsg,type(e))
 except ValueError as e:
     errorHandle(errormsg,type(e))
 except TimeoutError as e:
