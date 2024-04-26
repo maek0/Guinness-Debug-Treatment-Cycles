@@ -49,6 +49,9 @@ except ImportError:
     time.sleep(1)
     install('numpy')
 
+errormsg = "\nCan't write to the serial port, check the system's connections and the input parameters. Error type: "
+errormsgEnd = "\nLost connection with the machine. Error type: "
+
 def catchError(serial, functionstartTime):
     errorCase = serial.readline().decode().startswith("FSM Task: Enter STATE_ERROR")
     if errorCase:
@@ -166,11 +169,18 @@ volt = str(input("Enter the voltage setpoint (integer in the range [0, 150]) for
 if volt == "*-*" or float(volt)>150 or volt == "*.*":
     printLog("\nError: The voltage setpoint must be an integer in the range [0, 150].")
     windowClose()
+    
+limit = str(input("Enter the number of treatment cycles to run (Note: the script will stop after 18,000 cycles with no intervention if a number isn't entered): "))
+try:
+    int(limit)
+except ValueError:
+    limit = 18000
+except TypeError:
+    limit = 18000
+except IndexError:
+    limit = 18000
 
 tv = str("t_v "+volt+"\r")
-
-errormsg = "\nCan't write to the serial port, check the system's connections and the input parameters. Error type: "
-errormsgEnd = "\nLost connection with the machine. Error type: "
 
 f = open(filename,"ab")
 
@@ -202,7 +212,11 @@ printLog("----- Script started at ", time.strftime("%b %d %Y %H:%M:%S")," -----"
 
 output = ""
 
-printLog("\nOpening serial connection with the following parameters:\n   COM Port: {}\n   Logging to File: {}\n   {} minutes between treatment cycles\n   Voltage Setpoint: {}V".format(COMX,filename,buffer,volt))
+if int(limit)<18000:
+    printLog("\nOpening serial connection with the following parameters:\n   COM Port: {}\n   Logging to File: {}\n   {} minutes between treatment cycles\n   Voltage Setpoint: {}V\n   Limited to {} treatment cycles".format(COMX,filename,buffer,volt,limit))
+else:
+    printLog("\nOpening serial connection with the following parameters:\n   COM Port: {}\n   Logging to File: {}\n   {} minutes between treatment cycles\n   Voltage Setpoint: {}V".format(COMX,filename,buffer,volt))
+
 time.sleep(0.5)
 printLog("\nPress CTRL+C in the terminal to stop the script at any time.\n")
 time.sleep(0.5)
@@ -225,7 +239,7 @@ if not heard:
     print("\nSee ",debug_filename,"for record of output printed to terminal.")
     windowClose()
 print("\n")
-i = 0
+i = 1
 hold = int(np.ceil(buffer*60))
 cycleLength = 242   # 4 minutes +2 second for treatment cycle
 # note: extra 2 seconds compensates for the 2s of sleep totalled between generator commands
@@ -233,7 +247,7 @@ cycleLength = 242   # 4 minutes +2 second for treatment cycle
 timerstart = time.time()
 
 try:
-    while i < 18001:
+    while i <= int(limit):
         if stat == True:
             stat = ser.is_open
             readWrite(ser,functionstart,i)
