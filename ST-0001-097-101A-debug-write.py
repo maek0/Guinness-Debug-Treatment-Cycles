@@ -340,8 +340,6 @@ if int(limit)<18000:
     try:
         while True:
             readWrite(ser,functionstart,i)
-            catchError(ser, functionstart)
-            catchFault(ser, functionstart)
     except KeyboardInterrupt:
         manualstop = time.time()
         printLog("\nScript stopped manually at ", time.strftime("%b %d %Y %H:%M:%S"))
