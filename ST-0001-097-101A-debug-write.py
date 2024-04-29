@@ -69,37 +69,45 @@ def windowClose():
     time.sleep(1)
     exit()
 
-def catchError(serial, functionstartTime,count):
-    errorCase = serial.readline().decode().startswith("FSM Task: Enter STATE_ERROR")
-    if errorCase:
-        errorTime = time.time()
-        printLog("\nGenerator threw an error at ", time.strftime("%b %d %Y %H:%M:%S"))
-        functionstop = time.time()
-        delta = ((functionstop-functionstartTime)/60)/60  # hours
-        printLog("\nThe function ran for {:0.3f} hours.".format(delta))
-        printLog(str(count)+' complete treatment cycle(s) ran during this time.')
-        windowClose()
+# def catchError(serial, functionstartTime,count):
+#     errorCase = serial.readline().decode().startswith("FSM Task: Enter STATE_ERROR")
+#     if errorCase:
+#         errorTime = time.time()
+#         printLog("\nGenerator threw an error at ", time.strftime("%b %d %Y %H:%M:%S"))
+#         functionstop = time.time()
+#         delta = ((functionstop-functionstartTime)/60)/60  # hours
+#         printLog("\nThe function ran for {:0.3f} hours.".format(delta))
+#         printLog(str(count)+' complete treatment cycle(s) ran during this time.')
+#         windowClose()
         
-def catchFault(serial, functionstartTime,count):
-    faultCase = serial.readline().decode().startswith("FSM Task: Recv Fault Message:")
-    if faultCase:
-        noconnection = time.time()
-        printLog("\nGenerator threw a fault at ", time.strftime("%b %d %Y %H:%M:%S"))
-        functionstop = time.time()
-        delta = ((functionstop-functionstartTime)/60)/60  # hours
-        printLog("\nThe function ran for {:0.3f} hours.".format(delta))
-        printLog(str(count)+' complete treatment cycle(s) ran during this time.')
-        windowClose()
+# def catchFault(serial, functionstartTime,count):
+#     faultCase = serial.readline().decode().startswith("FSM Task: Recv Fault Message:")
+#     if faultCase:
+#         noconnection = time.time()
+#         printLog("\nGenerator threw a fault at ", time.strftime("%b %d %Y %H:%M:%S"))
+#         functionstop = time.time()
+#         delta = ((functionstop-functionstartTime)/60)/60  # hours
+#         printLog("\nThe function ran for {:0.3f} hours.".format(delta))
+#         printLog(str(count)+' complete treatment cycle(s) ran during this time.')
+#         windowClose()
 
-def verifyStart(serial, treatTime):
+def verifyStart(serial):
+    heard = False
     output = serial.readline().decode().startswith("FSM Task:")
-    if not output:
-        treatTimeNew = time.time()
-        serial.write("start\r".encode())
-        treatTime = verifyStart(serial, treatTimeNew)
-        time.sleep(0.2)
-    else:
-        treatTimeNew = treatTime
+    while not heard:
+        for j in range(10):
+            ser.write("start\r".encode())
+            output = ser.readline().decode().startswith("FSM Task:")
+            if output:
+                heard = True
+                treatTimeNew = time.time()
+            time.sleep(0.1)
+        time.sleep(0.1)
+        # if not output:
+        #     treatTimeNew = time.time()
+        #     serial.write("start\r".encode())
+        #     treatTimeNew = verifyStart(serial, treatTimeNew)
+        #     time.sleep(0.2)
     return treatTimeNew
     
 def functionStop(functionstartTime, count):
@@ -122,29 +130,56 @@ def errorHandle(message,name):
     time.sleep(5)
     exit()
     
-def readWrite(serial,functionstartTime,i):
+def readWrite(serial,functionstartTime,count):
     output = serial.readline()
     f.write(output)
+    # newi = int(count)
+    skip = False
     
     if not output:
         stoptime = time.time()
         printLog("\nError: The generator stopped sending data at ", time.strftime("%b %d %Y %H:%M:%S"))
-        functionStop(functionstartTime,i)
+        functionStop(functionstartTime,count)
+    elif output.decode().startswith("FSM Task: Recv Fault Message:"):
+        noconnection = time.time()
+        printLog("\nGenerator threw a fault at ", time.strftime("%b %d %Y %H:%M:%S"))
+        functionstop = time.time()
+        delta = ((functionstop-functionstartTime)/60)/60  # hours
+        printLog("\nThe function ran for {:0.3f} hours.".format(delta))
+        printLog(str(count)+' complete treatment cycle(s) ran during this time.')
+        windowClose()
+    elif output.decode().startswith("FSM Task: Enter STATE_ERROR"):
+        errorTime = time.time()
+        printLog("\nGenerator threw an error at ", time.strftime("%b %d %Y %H:%M:%S"))
+        functionstop = time.time()
+        delta = ((functionstop-functionstartTime)/60)/60  # hours
+        printLog("\nThe function ran for {:0.3f} hours.".format(delta))
+        printLog(str(count)+' complete treatment cycle(s) ran during this time.')
+        windowClose()
+    elif output.decode().startswith("Treatment Terminated Early..."):
+        printLog("\nThe treatment cycle was stopped early. Only {:.2f} seconds had elapsed instead of 240.\nThis cycle will not count as a completed treatment cycle.\n".format(toc))
+        # newi = int(int(count) -1)
+        skip = True
+        
+    # if int(newi) < 0:
+    #     newi = int(0)
+        
+    return skip
 
-def catchStop(serial, toc, i):
-    if serial.readline().decode().startswith("Treatment Terminated Early..."):
-        printLog("\nThe treatment cycle was stopped early. Only {:.2f} seconds had elapsed instead of 240.\nThis cycle will not count as a completed treatment cycle.\n".format(toc))
-        newi = i -1
-    elif serial.readline().decode().startswith("FSM Task: recieved button index 11"):
-        printLog("\nThe treatment cycle was stopped early. Only {:.2f} seconds had elapsed instead of 240.\nThis cycle will not count as a completed treatment cycle.\n".format(toc))
-        newi = i -1
-    else:
-        newi = i
+# def catchStop(serial, toc, i):
+#     if serial.readline().decode().startswith("Treatment Terminated Early..."):
+#         printLog("\nThe treatment cycle was stopped early. Only {:.2f} seconds had elapsed instead of 240.\nThis cycle will not count as a completed treatment cycle.\n".format(toc))
+#         newi = i -1
+#     elif serial.readline().decode().startswith("FSM Task: recieved button index 11"):
+#         printLog("\nThe treatment cycle was stopped early. Only {:.2f} seconds had elapsed instead of 240.\nThis cycle will not count as a completed treatment cycle.\n".format(toc))
+#         newi = i -1
+#     else:
+#         newi = i
         
-    if newi < 0:
-        newi = 0
+#     if newi < 0:
+#         newi = 0
         
-    return newi
+#     return newi
 
 COM = input("\nEnter the COM number of the Guinness USB Debug Cable (AT-0001-656) in use: ")
 if COM == "COM*":
@@ -152,7 +187,7 @@ if COM == "COM*":
 else:
     COMX = str('COM'+COM)
 
-name = input("Enter the file name that the serial data will be writtent to: ")
+name = input("Enter the file name of the .csv that the serial data will be writtent to: ")
 if name == "*.csv":
     filename = name
 else:
@@ -250,57 +285,54 @@ if not heard:
     print("\nSee ",debug_filename,"for record of output printed to terminal.")
     windowClose()
 print("\n")
-i = 0
+i = int(0)
 hold = int(np.ceil(buffer*60))
-cycleLength = 242   # 4 minutes +2 second for treatment cycle
-# note: extra 2 seconds compensates for the 2s of sleep totalled between generator commands
+cycleLength = 241   # 4 minutes +1 second for treatment cycle
+# note: extra 1 seconds compensates for the 1s of sleep totalled between generator commands
 
 timerstart = time.time()
 
 try:
-    while i <= (int(limit)-1):
+    while i <= (int(limit)):
         if stat == True:
+            skip = False
             stat = ser.is_open
-            readWrite(ser,functionstart,i)
+            _ = readWrite(ser,functionstart,i)
             tic = time.time()
             toc = tic-timerstart
 
             if toc>=hold:
-                treatTime = time.time()
-                printLog('Treatment cycle #'+str(i+1)+' starting at', time.strftime("%b %d %Y %H:%M:%S"),' ...')
-                time.sleep(0.5)
+                time.sleep(0.25)
                 ser.write("reset\r".encode())
-                time.sleep(0.5)
+                time.sleep(0.25)
                 ser.write("treatment\r".encode())
-                time.sleep(0.5)
+                time.sleep(0.25)
                 ser.write(tv.encode())
-                time.sleep(0.5)
+                time.sleep(0.25)
                 ser.write("start\r".encode())
                 
-                catchError(ser, functionstart,i)
-                catchFault(ser, functionstart,i)
-                i = catchStop(ser, toc, i)
-                
-                treatTime = verifyStart(ser,treatTime)
+                # when was the treatment confirmed to start?
+                treatTime = verifyStart(ser)
+                printLog('Treatment cycle #{} starting at'.format(i+1), time.strftime("%b %d %Y %H:%M:%S"),' ...')
             
                 while toc>=hold and toc<=int(hold+cycleLength):
-                    stat = ser.is_open
+                    skip = readWrite(ser,functionstart,i)
                     
-                    if stat == False:
-                        noconnection = time.time()
-                        printLog("\nLost connection with the machine at", time.strftime("%b %d %Y %H:%M:%S"))
-                        functionStop(functionstart,i)
-                        
-                    readWrite(ser,functionstart,i)
-                    
-                    catchError(ser, functionstart,i)
-                    catchFault(ser, functionstart,i)
-                    i = catchStop(ser, toc, i)
+                    if skip:
+                        timerstart = time.time()
+                        # jump out of this while loop and restart the countdown to treatment
                     
                     tic = time.time()
                     toc = tic-timerstart
                 
-                i = i+1
+                if skip:
+                    pass
+                    # we didn't complete a treatment cycle, don't increment cycle count
+                else:
+                    i = i +1
+                    # we DID complete a treatment cycle, increment cycle count
+                
+                # restart the countdown to treatment:
                 timerstart = time.time()
                 tic = time.time()
                 toc = tic-timerstart
@@ -341,7 +373,7 @@ if int(limit)<18000:
     
     try:
         while True:
-            readWrite(ser,functionstart,i)
+            _ = readWrite(ser,functionstart,i)
     except KeyboardInterrupt:
         manualstop = time.time()
         printLog("\nScript stopped manually at ", time.strftime("%b %d %Y %H:%M:%S"))
