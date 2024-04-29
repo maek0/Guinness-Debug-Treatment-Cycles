@@ -69,7 +69,7 @@ def windowClose():
     time.sleep(1)
     exit()
 
-def catchError(serial, functionstartTime):
+def catchError(serial, functionstartTime,count):
     errorCase = serial.readline().decode().startswith("FSM Task: Enter STATE_ERROR")
     if errorCase:
         errorTime = time.time()
@@ -77,9 +77,10 @@ def catchError(serial, functionstartTime):
         functionstop = time.time()
         delta = ((functionstop-functionstartTime)/60)/60  # hours
         printLog("\nThe function ran for {:0.3f} hours.".format(delta))
+        printLog(str(count)+' complete treatment cycle(s) ran during this time.')
         windowClose()
         
-def catchFault(serial, functionstartTime):
+def catchFault(serial, functionstartTime,count):
     faultCase = serial.readline().decode().startswith("FSM Task: Recv Fault Message:")
     if faultCase:
         noconnection = time.time()
@@ -87,6 +88,7 @@ def catchFault(serial, functionstartTime):
         functionstop = time.time()
         delta = ((functionstop-functionstartTime)/60)/60  # hours
         printLog("\nThe function ran for {:0.3f} hours.".format(delta))
+        printLog(str(count)+' complete treatment cycle(s) ran during this time.')
         windowClose()
 
 def verifyStart(serial, treatTime):
@@ -217,7 +219,7 @@ except IndexError as e:
     
 functionstart = time.time()
 print("\n")
-printLog("----- ",tool_version," script started at ", time.strftime("%b %d %Y %H:%M:%S")," -----")
+printLog("----- ",tool_version,"script started at", time.strftime("%b %d %Y %H:%M:%S")," -----")
 
 output = ""
 
@@ -275,8 +277,8 @@ try:
                 time.sleep(0.5)
                 ser.write("start\r".encode())
                 
-                catchError(ser, functionstart)
-                catchFault(ser, functionstart)
+                catchError(ser, functionstart,i)
+                catchFault(ser, functionstart,i)
                 i = catchStop(ser, toc, i)
                 
                 treatTime = verifyStart(ser,treatTime)
@@ -291,8 +293,8 @@ try:
                         
                     readWrite(ser,functionstart,i)
                     
-                    catchError(ser, functionstart)
-                    catchFault(ser, functionstart)
+                    catchError(ser, functionstart,i)
+                    catchFault(ser, functionstart,i)
                     i = catchStop(ser, toc, i)
                     
                     tic = time.time()
