@@ -51,43 +51,9 @@ except ImportError:
 errormsg = "\nCan't write to the serial port, check the system's connections and the input parameters. Error type: "
 errormsgEnd = "\nLost connection with the machine. Error type: "
 
-def catchError(serial, functionstartTime):
-    errorCase = serial.readline().decode().startswith("FSM Task: Enter STATE_ERROR")
-    if errorCase:
-        errorTime = time.time()
-        printLog("\nGenerator threw an error at ", time.strftime("%b %d %Y %H:%M:%S"))
-        functionstop = time.time()
-        delta = ((functionstop-functionstartTime)/60)/60  # hours
-        printLog("\nThe function ran for {:0.3f} hours.".format(delta))
-        f.close()
-        time.sleep(5)
-        exit()
-        
-def catchFault(serial, functionstartTime):
-    faultCase = serial.readline().decode().startswith("FSM Task: Recv Fault Message:")
-    if faultCase:
-        noconnection = time.time()
-        printLog("\nGenerator threw a fault at ", time.strftime("%b %d %Y %H:%M:%S"))
-        functionstop = time.time()
-        delta = ((functionstop-functionstartTime)/60)/60  # hours
-        printLog("\nThe function ran for {:0.3f} hours.".format(delta))
-        f.close()
-        time.sleep(5)
-        exit()
-
-def verifyStart(serial, treatTime):
-    output = serial.readline().decode().startswith("FSM Task:")
-    if not output:
-        treatTimeNew = time.time()
-        serial.write("start\r".encode())
-        treatTime = verifyStart(serial, treatTimeNew)
-        time.sleep(0.2)
-    else:
-        treatTimeNew = treatTime
-    return treatTimeNew
-
 def windowClose():
     time.sleep(5)
+    f.close()
     print("\nWindow closing in...")
     print("5...")
     time.sleep(1)
@@ -100,11 +66,41 @@ def windowClose():
     print("1...")
     time.sleep(1)
     exit()
+
+def catchError(serial, functionstartTime):
+    errorCase = serial.readline().decode().startswith("FSM Task: Enter STATE_ERROR")
+    if errorCase:
+        errorTime = time.time()
+        printLog("\nGenerator threw an error at ", time.strftime("%b %d %Y %H:%M:%S"))
+        functionstop = time.time()
+        delta = ((functionstop-functionstartTime)/60)/60  # hours
+        printLog("\nThe function ran for {:0.3f} hours.".format(delta))
+        windowClose()
+        
+def catchFault(serial, functionstartTime):
+    faultCase = serial.readline().decode().startswith("FSM Task: Recv Fault Message:")
+    if faultCase:
+        noconnection = time.time()
+        printLog("\nGenerator threw a fault at ", time.strftime("%b %d %Y %H:%M:%S"))
+        functionstop = time.time()
+        delta = ((functionstop-functionstartTime)/60)/60  # hours
+        printLog("\nThe function ran for {:0.3f} hours.".format(delta))
+        windowClose()
+
+def verifyStart(serial, treatTime):
+    output = serial.readline().decode().startswith("FSM Task:")
+    if not output:
+        treatTimeNew = time.time()
+        serial.write("start\r".encode())
+        treatTime = verifyStart(serial, treatTimeNew)
+        time.sleep(0.2)
+    else:
+        treatTimeNew = treatTime
+    return treatTimeNew
     
 def functionStop(functionstartTime, count):
     functionstop = time.time()
     delta = ((functionstop-functionstartTime)/60)/60  # hours
-    f.close()
     if count >= 0:
         i = count
     else:
@@ -267,7 +263,7 @@ try:
 
             if toc>=hold:
                 treatTime = time.time()
-                printLog('Treatment cycle #'+str(i+1)+' starting at', time.strftime("%b %d %Y %H:%M:%S"),' ...')
+                printLog('Treatment cycle #'+str(i)+' starting at', time.strftime("%b %d %Y %H:%M:%S"),' ...')
                 time.sleep(0.5)
                 ser.write("reset\r".encode())
                 time.sleep(0.5)
@@ -312,7 +308,7 @@ try:
 except KeyboardInterrupt:
     manualstop = time.time()
     printLog("\nScript stopped manually at ", time.strftime("%b %d %Y %H:%M:%S"))
-    pass
+    ser.write("stop\r".encode())
 except ValueError as e:
     printLog(errormsgEnd,type(e))
     ser.write("stop\r".encode())
@@ -330,5 +326,25 @@ except serial.SerialException as e:
 except PermissionError as e:
     printLog("\n",filename,"could not be accessed. Error type: ",type(e))
     ser.write("stop\r".encode())
+
+
+if int(limit)<18000:
+    functionstop = time.time()
+    delta = ((functionstop-functionstart)/60)/60  # hours
     
-functionStop(functionstart,i)
+    ser.write("reset\r".encode())
+    printLog(str(i)+' complete treatment cycle(s) ran during this time.')
+    printLog("\nThe script ran treatments for {:0.3f} hours, but will continue to write generator debug data to file until the window is closed.".format(delta))
+    print("\nSee ",debug_filename,"for record of output printed to terminal.")
+    
+    try:
+        while True:
+            readWrite(ser,functionstart,i)
+            catchError(ser, functionstart)
+            catchFault(ser, functionstart)
+    except KeyboardInterrupt:
+        manualstop = time.time()
+        printLog("\nScript stopped manually at ", time.strftime("%b %d %Y %H:%M:%S"))
+        windowClose()
+else:
+    functionStop(functionstart,i)
