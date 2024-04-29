@@ -2,6 +2,8 @@ import sys
 import subprocess
 import time
 
+tool_version = "ST-0001-097-101A"
+
 def install(package):
     subprocess.check_call([sys.executable,"-m","pip","install",package])
     
@@ -215,7 +217,7 @@ except IndexError as e:
     
 functionstart = time.time()
 print("\n")
-printLog("----- Script started at ", time.strftime("%b %d %Y %H:%M:%S")," -----")
+printLog("----- ",tool_version," script started at ", time.strftime("%b %d %Y %H:%M:%S")," -----")
 
 output = ""
 
@@ -234,10 +236,9 @@ heard = False
 
 for i in tqdm(range(10),"Verifying communication"):
     ser.write("test\r".encode())
-    for j in range(10):
-        output = ser.readline().decode().startswith("Test")
-        if output:
-            heard = True
+    output = ser.readline().decode().startswith("Test")
+    if output:
+        heard = True
     time.sleep(0.1)
 
 if not heard:
