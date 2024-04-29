@@ -235,11 +235,12 @@ ser.timeout = 1.0
 heard = False
 
 for i in tqdm(range(10),"Verifying communication"):
-    ser.write("test\r".encode())
-    output = ser.readline().decode().startswith("Test")
-    if output:
-        heard = True
-    time.sleep(0.1)
+    for j in range(10):
+        ser.write("test\r".encode())
+        output = ser.readline().decode().startswith("Test")
+        if output:
+            heard = True
+        time.sleep(0.1)
 
 if not heard:
     printLog("\nGenerator did not acknowledge the test command. Power cycle the generator and restart the script")
@@ -247,7 +248,7 @@ if not heard:
     print("\nSee ",debug_filename,"for record of output printed to terminal.")
     windowClose()
 print("\n")
-i = 1
+i = 0
 hold = int(np.ceil(buffer*60))
 cycleLength = 242   # 4 minutes +2 second for treatment cycle
 # note: extra 2 seconds compensates for the 2s of sleep totalled between generator commands
@@ -255,7 +256,7 @@ cycleLength = 242   # 4 minutes +2 second for treatment cycle
 timerstart = time.time()
 
 try:
-    while i <= int(limit):
+    while i <= (int(limit)-1):
         if stat == True:
             stat = ser.is_open
             readWrite(ser,functionstart,i)
@@ -264,7 +265,7 @@ try:
 
             if toc>=hold:
                 treatTime = time.time()
-                printLog('Treatment cycle #'+str(i)+' starting at', time.strftime("%b %d %Y %H:%M:%S"),' ...')
+                printLog('Treatment cycle #'+str(i+1)+' starting at', time.strftime("%b %d %Y %H:%M:%S"),' ...')
                 time.sleep(0.5)
                 ser.write("reset\r".encode())
                 time.sleep(0.5)
