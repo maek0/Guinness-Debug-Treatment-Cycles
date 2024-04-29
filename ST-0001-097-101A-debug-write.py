@@ -333,9 +333,7 @@ if int(limit)<18000:
     delta = ((functionstop-functionstart)/60)/60  # hours
     
     ser.write("reset\r".encode())
-    printLog(str(i)+' complete treatment cycle(s) ran during this time.')
-    printLog("\nThe script ran treatments for {:0.3f} hours, but will continue to write generator debug data to file until the window is closed.".format(delta))
-    print("\nSee ",debug_filename,"for record of output printed to terminal.")
+    printLog(str(i)+' complete treatment cycle(s) ran during this time. The script will continue to write generator debug data to file until the window is closed.')
     
     try:
         while True:
@@ -344,5 +342,6 @@ if int(limit)<18000:
         manualstop = time.time()
         printLog("\nScript stopped manually at ", time.strftime("%b %d %Y %H:%M:%S"))
         windowClose()
+        functionStop(functionstart,i)
 else:
     functionStop(functionstart,i)
