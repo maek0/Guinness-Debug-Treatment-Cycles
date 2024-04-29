@@ -95,14 +95,12 @@ def verifyStart(serial):
     heard = False
     output = serial.readline().decode().startswith("FSM Task:")
     while not heard:
-        for j in range(10):
-            ser.write("start\r".encode())
-            output = ser.readline().decode().startswith("FSM Task:")
-            if output:
-                heard = True
-                treatTimeNew = time.time()
-            time.sleep(0.1)
         time.sleep(0.1)
+        ser.write("start\r".encode())
+        output = ser.readline().decode().startswith("FSM Task:")
+        if output:
+            heard = True
+            treatTimeNew = time.time()
         # if not output:
         #     treatTimeNew = time.time()
         #     serial.write("start\r".encode())
@@ -272,7 +270,7 @@ ser.timeout = 1.0
 heard = False
 
 for i in tqdm(range(10),"Verifying communication"):
-    for j in range(10):
+    for j in range(2):
         ser.write("test\r".encode())
         output = ser.readline().decode().startswith("Test")
         if output:
@@ -308,8 +306,7 @@ try:
                 ser.write("treatment\r".encode())
                 time.sleep(0.25)
                 ser.write(tv.encode())
-                time.sleep(0.25)
-                ser.write("start\r".encode())
+                time.sleep(0.15)
                 
                 # when was the treatment confirmed to start?
                 treatTime = verifyStart(ser)
